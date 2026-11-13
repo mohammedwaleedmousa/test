@@ -93,13 +93,6 @@
           </button>
         </nav>
         <div class="sidebar-bottom">
-          <div class="sidebar-tip">
-            <span data-icon="bolt"></span>
-            <div>
-              <b>خطوة واحدة تفرق.</b>
-              <p>ردّ أسرع، وخلّ كل طلب يوصل بتجربة أفضل.</p>
-            </div>
-          </div>
           <div class="sidebar-tools">
             <button id="helpBtn">
               <span data-icon="help"></span>المساعدة والاختصارات</button
@@ -158,11 +151,8 @@
         <main>
           <section class="page-heading">
             <div>
-              <div class="eyebrow">
-                <span class="eyebrow-line"></span>تجربة عميل أفضل، تبدأ بمحادثة
-              </div>
-              <h1>مركز المحادثات<span class="heading-period">.</span></h1>
-              <p>كل رسالة، كل طلب، وكل التفاصيل التي تحتاجها. في مكان واحد.</p>
+              <h1>المحادثات</h1>
+              <p>تواصل منظّم، ومتابعة واضحة لكل طلب.</p>
             </div>
             <div class="heading-actions">
               <div class="local-indicator"><i></i><span>عرض تجريبي</span></div>
@@ -172,33 +162,41 @@
             </div>
           </section>
           <section class="metric-grid" aria-label="مؤشرات المحادثات">
-            <button class="metric-card" data-metric="all">
-              <div>
-                <span>إجمالي المحادثات</span><strong id="totalCount">8</strong
-                ><small>ضمن السجل المعروض</small>
+            <button class="metric-card stat-widget" data-metric="all">
+              <div class="stat-content">
+                <span class="stat-label">إجمالي المحادثات</span
+                ><strong class="stat-number" id="totalCount">8</strong
+                ><small class="stat-caption">ضمن السجل المعروض</small>
               </div>
               <span class="metric-icon teal" data-icon="chat"></span>
             </button>
-            <button class="metric-card" data-metric="waiting">
-              <div>
-                <span>بانتظار ردّك</span><strong id="waitingCount">3</strong
-                ><small><i class="status-dot amber"></i>كل رد يصنع فرقاً</small>
+            <button class="metric-card stat-widget" data-metric="waiting">
+              <div class="stat-content">
+                <span class="stat-label">بانتظار ردّك</span
+                ><strong class="stat-number" id="waitingCount">3</strong
+                ><small class="stat-caption"
+                  >تحتاج متابعة من خدمة العملاء</small
+                >
               </div>
               <span class="metric-icon amber" data-icon="clock"></span>
             </button>
-            <button class="metric-card" id="responseMetric">
-              <div>
-                <span>متوسط وقت الرد</span><strong id="responseTime">—</strong
-                ><small id="responseSample"
+            <button class="metric-card stat-widget" id="responseMetric">
+              <div class="stat-content">
+                <span class="stat-label">متوسط وقت الرد</span
+                ><strong class="stat-number" id="responseTime">—</strong
+                ><small class="stat-caption" id="responseSample"
                   >من الرسائل التي تم الرد عليها</small
                 >
               </div>
               <span class="metric-icon violet" data-icon="bolt"></span>
             </button>
-            <button class="metric-card" data-metric="resolved">
-              <div>
-                <span>محادثات تم حلّها</span><strong id="resolvedCount">2</strong
-                ><small id="resolvedPercentage">من إجمالي المحادثات</small>
+            <button class="metric-card stat-widget" data-metric="resolved">
+              <div class="stat-content">
+                <span class="stat-label">محادثات تم حلّها</span
+                ><strong class="stat-number" id="resolvedCount">2</strong
+                ><small class="stat-caption" id="resolvedPercentage"
+                  >من إجمالي المحادثات</small
+                >
               </div>
               <span class="metric-ring" id="resolutionRing"
                 ><span data-icon="check"></span
@@ -295,7 +293,10 @@
                 ></button>
                 <div id="chatAvatar"></div>
                 <div class="chat-identity">
-                  <h2 id="chatName">اختر محادثة</h2>
+                  <div class="contact-heading">
+                    <h2 id="chatName">اختر محادثة</h2>
+                    <span id="chatStateChip" class="state-chip"></span>
+                  </div>
                   <p id="chatSubtitle"></p>
                 </div>
                 <div class="chat-actions">
@@ -381,10 +382,10 @@
                     </button>
                   </div>
                   <button id="replyAssistBtn" class="reply-assist">
-                    <span data-icon="spark"></span>مساعد الردود
+                    <span data-icon="note"></span>قوالب الردود
                   </button>
                 </div>
-                <div id="quickReplies" class="quick-replies"></div>
+                <div id="quickReplies" class="quick-replies" hidden></div>
                 <div
                   id="attachmentPreview"
                   class="attachment-preview"
@@ -440,7 +441,7 @@
             <aside class="details-panel" id="detailsPanel"></aside>
           </section>
           <footer class="page-footer">
-            <span><b>وَصل</b> صُمّم لتجربة تترك أثراً.</span
+            <span><span class="footer-dot"></span>وصل · مساحة العمليات</span
             ><span id="modeFooter">عرض تجريبي · بيانات توضيحية</span
             ><button id="shortcutsBtn">
               اختصارات لوحة المفاتيح<span data-icon="bolt"></span>

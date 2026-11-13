@@ -1,4 +1,5 @@
 import "./style.css";
+import "./layout.css";
 import { initial } from "./demo-data.js";
 import { icon } from "./icons.js";
 import { CloudRepository, readConfig, safeImage } from "./repository.js";
@@ -51,6 +52,7 @@ let saving = false,
   refreshAgain = false,
   refreshTimer = null,
   toastTimer = null;
+let detailsTab = "order";
 let composeMode = "reply",
   attachment = null,
   attachmentName = "",
@@ -87,7 +89,7 @@ function saveDraft() {
   if (activeId) drafts[draftKey()] = $("#messageInput").value;
 }
 function avatar(c, small = false) {
-  return `<span class="avatar ${esc(c.color || "blue")} ${!cloudMode && c.online ? "online" : ""} ${small ? "small" : ""}">${esc(c.initials || "و")}</span>`;
+  return `<span class="avatar ${c.type === "driver" ? "contact-driver" : "contact-customer"} ${!cloudMode && c.online ? "online" : ""} ${small ? "small" : ""}">${esc(c.initials || "و")}</span>`;
 }
 function busy(value) {
   saving = value;
@@ -135,9 +137,13 @@ function renderMetrics() {
   $("#waitingCount").textContent = m.waiting;
   $("#resolvedCount").textContent = m.resolved;
   $("#responseTime").textContent =
-    m.average === null ? "—" : duration(m.average);
+    m.average === null
+      ? "—"
+      : [Math.floor(m.average / 60), m.average % 60]
+          .map((n) => String(n).padStart(2, "0"))
+          .join(":");
   $("#responseSample").textContent = m.responses
-    ? `من ${m.responses} استجابة في السجل`
+    ? `دقيقة:ثانية · ${m.responses} استجابة`
     : "لا توجد ردود قابلة للقياس";
   const percent = m.total ? Math.round((m.resolved / m.total) * 100) : 0;
   $("#resolvedPercentage").textContent = `${percent}% من إجمالي المحادثات`;
@@ -179,7 +185,7 @@ function renderList() {
         .map((c) => {
           const last = lastPublic(c),
             waiting = sla(c).state === "overdue";
-          return `<div class="conversation-row ${c.id === activeId ? "active" : ""}">${selectMode ? `<input type="checkbox" class="row-checkbox" data-check="${esc(c.id)}" aria-label="تحديد محادثة ${esc(c.name)}" ${selected.has(c.id) ? "checked" : ""}>` : ""}<button class="row-main" data-chat="${esc(c.id)}" aria-label="محادثة ${esc(c.name)}" aria-current="${c.id === activeId}">${avatar(c)}<span class="row-content"><span class="row-top"><strong>${esc(c.name)}</strong><time>${esc(last?.time || c.time || "الآن")}</time></span><span class="row-preview" style="display:block">${last?.by === "me" ? "أنت: " : ""}${esc(last?.text || (last?.image ? "صورة مرفقة" : "ابدأ محادثة جديدة"))}</span><span class="row-bottom"><span class="row-order">#W-${esc(c.order)}</span>${c.tags[0] ? `<span class="row-tag">${esc(c.tags[0])}</span>` : ""}${c.starred ? `<span class="row-star">${icon("star")}</span>` : ""}${c.priority !== "normal" ? `<span class="row-flag ${c.priority}" title="أولوية ${PRIORITY[c.priority]}">${icon("flag")}</span>` : ""}${c.unread ? `<span class="unread-badge">${c.unread}</span>` : waiting ? `<span class="row-flag urgent" title="متأخر عن وقت الرد المستهدف">${icon("clock")}</span>` : c.assignee === "me" ? '<span class="row-assigned" title="مسندة إليك">م</span>' : ""}</span></span></button></div>`;
+          return `<div class="conversation-row ${c.id === activeId ? "active" : ""}">${selectMode ? `<input type="checkbox" class="row-checkbox" data-check="${esc(c.id)}" aria-label="تحديد محادثة ${esc(c.name)}" ${selected.has(c.id) ? "checked" : ""}>` : ""}<button class="row-main" data-chat="${esc(c.id)}" aria-label="محادثة ${esc(c.name)}" aria-current="${c.id === activeId}">${avatar(c)}<span class="row-content"><span class="row-top"><strong>${esc(c.name)}</strong><time>${esc(last?.time || c.time || "الآن")}</time></span><span class="row-preview" style="display:block">${last?.by === "me" ? "أنت: " : ""}${esc(last?.text || (last?.image ? "صورة مرفقة" : "ابدأ محادثة جديدة"))}</span><span class="row-bottom"><span class="row-order">#W-${esc(c.order)}</span>${c.tags[0] ? `<span class="row-tag">${esc(c.tags[0])}</span>` : ""}<span class="row-indicators">${c.starred ? `<span class="row-star">${icon("star")}</span>` : ""}${c.priority !== "normal" ? `<span class="row-flag ${c.priority}" title="أولوية ${PRIORITY[c.priority]}">${icon("flag")}</span>` : ""}${c.unread ? `<span class="unread-badge">${c.unread}</span>` : waiting ? `<span class="row-flag urgent" title="متأخر عن وقت الرد المستهدف">${icon("clock")}</span>` : c.status === "resolved" ? `<span class="row-resolved">${icon("check")}</span>` : ""}</span></span></span></button></div>`;
         })
         .join("")
     : `<div class="empty-state">${icon("search")}<strong>لا توجد محادثات هنا</strong><small>جرّب بحثاً مختلفاً، أو أنشئ محادثة جديدة للبدء.</small><button id="clearFilters">إظهار كل المحادثات</button></div>`;
@@ -313,6 +319,8 @@ function renderChat(scroll = false) {
   const c = current();
   $("#chatAvatar").innerHTML = c ? avatar(c) : "";
   $("#chatName").textContent = c?.name || "صندوق الوارد";
+  $("#chatStateChip").textContent = c ? STATUS[c.status] : "";
+  $("#chatStateChip").className = `state-chip state-${c?.status || "empty"}`;
   $("#chatSubtitle").innerHTML = c
     ? `${!cloudMode && c.online ? '<i class="status-dot green"></i>' : ""}${c.type === "driver" ? "مندوب توصيل" : "عميل"} <span>·</span> ${cloudMode ? "الحضور غير متاح" : c.online ? "متاح في بيانات العرض" : "سجل توضيحي"}`
     : "اختر محادثة للمتابعة";
@@ -345,8 +353,22 @@ function renderDetails() {
     delivery = Number(String(c.delivery || "").replaceAll(",", "")) || 0;
   const steps = ["طلب جديد", "قيد التجهيز", "في الطريق", "تم التسليم"],
     stage = steps.indexOf(c.orderState);
-  el.innerHTML = `<div class="details-heading"><h3>تفاصيل المحادثة</h3><button class="icon-btn" id="closeDetails" aria-label="إغلاق التفاصيل">${icon("x")}</button></div>
-  <section class="detail-section"><div class="contact-card">${avatar(c)}<div><strong>${esc(c.name)}</strong><small>${c.type === "driver" ? "مندوب توصيل" : "عميل"} · #W-${esc(c.order)}</small></div></div>
+  el.innerHTML = `<div class="details-heading"><h3>مساحة التفاصيل</h3><button class="icon-btn" id="closeDetails" aria-label="إغلاق التفاصيل">${icon("x")}</button></div>
+    <div class="context-tabs" role="tablist" aria-label="تبويبات مساحة التفاصيل">
+      <button id="orderContextTab" data-context="order" role="tab" aria-selected="${detailsTab === "order"}" class="${detailsTab === "order" ? "selected" : ""}">${icon("box")}الطلب</button>
+      <button id="manageContextTab" data-context="manage" role="tab" aria-selected="${detailsTab === "manage"}" class="${detailsTab === "manage" ? "selected" : ""}">${icon("settings")}إدارة المحادثة</button>
+    </div>
+    <div class="widget-stack" id="orderWidgets" role="tabpanel" aria-labelledby="orderContextTab" ${detailsTab === "order" ? "" : "hidden"}>  <section class="detail-section widget-card"><h4 class="detail-label">طلب التوصيل<button class="small-icon" id="editOrderBtn" aria-label="تعديل بيانات الطلب">${icon("edit")}</button></h4><div class="order-card"><div class="order-card-head"><span>${icon("box")}</span><div><small>رقم الطلب</small><b dir="ltr">#W-${esc(c.order)}</b></div><span class="delivery-badge ${stage === 3 ? "delivered" : ""}">${esc(c.orderState)}</span></div><div class="route"><div class="route-point"><small>نقطة الاستلام</small><b>${esc(c.restaurant || "بانتظار تحديد المتجر")}</b><p>${esc(c.pickup || "لم يُحدد العنوان بعد")}</p></div><div class="route-point destination"><small>عنوان التوصيل</small><b>${esc(c.address || "لم يُحدد العنوان بعد")}</b></div></div><div class="order-progress" aria-label="تقدم الطلب"><span class="${stage >= 0 ? "done" : ""}"></span><span class="${stage >= 1 ? "done" : ""}"></span><span class="${stage >= 2 ? "done" : ""}"></span><span class="${stage >= 3 ? "done" : ""}"></span></div></div></section>
+  <section class="detail-section widget-card"><h4 class="detail-label">مندوب التوصيل</h4><div class="driver-card"><span class="avatar sage">${esc(
+    (c.driver || "—")
+      .split(" ")
+      .map((x) => x[0])
+      .slice(0, 2)
+      .join(" "),
+  )}</span><div><strong>${esc(c.driver || "لم يُعيّن مندوب")}</strong><small>${c.driver ? "المندوب المرتبط بالطلب" : "بانتظار التعيين"}</small></div><button class="icon-btn" id="contactDriver" aria-label="مراسلة المندوب">${icon("chat")}</button></div></section>
+  <section class="detail-section widget-card"><h4 class="detail-label">ملخص الدفع</h4><div class="payment-row"><span>قيمة الطلب</span><b>${esc(c.amount || "—")} ر.ي</b></div><div class="payment-row"><span>التوصيل</span><b>${esc(c.delivery || "—")} ر.ي</b></div><div class="payment-row payment-total"><span>الإجمالي</span><b>${amount || delivery ? (amount + delivery).toLocaleString("en-US") : "—"} ر.ي</b></div><div class="payment-row"><span>طريقة الدفع</span><b>${esc(c.payment || "غير محددة")}</b></div></section>
+</div>
+    <div class="widget-stack" id="manageWidgets" role="tabpanel" aria-labelledby="manageContextTab" ${detailsTab === "manage" ? "" : "hidden"}>  <section class="detail-section widget-card"><h4 class="detail-label">جهة الاتصال والإسناد</h4><div class="contact-card">${avatar(c)}<div><strong>${esc(c.name)}</strong><small>${c.type === "driver" ? "مندوب توصيل" : "عميل"} · #W-${esc(c.order)}</small></div></div>
   <div class="control-pair"><label for="detailStatus">الحالة</label><select id="detailStatus">${Object.entries(
     STATUS,
   )
@@ -364,22 +386,23 @@ function renderDetails() {
     )
     .join("")}</select></div>
   <div class="control-pair"><label for="detailAssignee">المسؤول</label><select id="detailAssignee"><option value="" ${!c.assignee ? "selected" : ""}>غير مسندة</option><option value="me" ${c.assignee === "me" ? "selected" : ""}>مسندة إليّ</option></select></div></section>
-  <section class="detail-section"><h4 class="detail-label">الوسوم<span>${c.tags.length}</span></h4><div class="tags">${c.tags.map((tag) => `<span class="tag-chip">${esc(tag)}<button data-remove-tag="${esc(tag)}" aria-label="إزالة وسم ${esc(tag)}">×</button></span>`).join("")}<button id="addTagBtn" class="add-tag">+ إضافة وسم</button></div><select id="tagSelect" class="tag-selector" aria-label="إضافة وسم" hidden><option value="">اختر الوسم</option>${TAGS.filter(
+  <section class="detail-section widget-card"><h4 class="detail-label">الوسوم<span>${c.tags.length}</span></h4><div class="tags">${c.tags.map((tag) => `<span class="tag-chip">${esc(tag)}<button data-remove-tag="${esc(tag)}" aria-label="إزالة وسم ${esc(tag)}">×</button></span>`).join("")}<button id="addTagBtn" class="add-tag">+ إضافة وسم</button></div><select id="tagSelect" class="tag-selector" aria-label="إضافة وسم" hidden><option value="">اختر الوسم</option>${TAGS.filter(
     (t) => !c.tags.includes(t),
   )
     .map((t) => `<option>${t}</option>`)
     .join("")}</select></section>
-  <section class="detail-section"><h4 class="detail-label">طلب التوصيل<button class="small-icon" id="editOrderBtn" aria-label="تعديل بيانات الطلب">${icon("edit")}</button></h4><div class="order-card"><div class="order-card-head"><span>${icon("box")}</span><div><small>رقم الطلب</small><b dir="ltr">#W-${esc(c.order)}</b></div><span class="delivery-badge ${stage === 3 ? "delivered" : ""}">${esc(c.orderState)}</span></div><div class="route"><div class="route-point"><small>نقطة الاستلام</small><b>${esc(c.restaurant || "بانتظار تحديد المتجر")}</b><p>${esc(c.pickup || "لم يُحدد العنوان بعد")}</p></div><div class="route-point destination"><small>عنوان التوصيل</small><b>${esc(c.address || "لم يُحدد العنوان بعد")}</b></div></div><div class="order-progress" aria-label="تقدم الطلب"><span class="${stage >= 0 ? "done" : ""}"></span><span class="${stage >= 1 ? "done" : ""}"></span><span class="${stage >= 2 ? "done" : ""}"></span><span class="${stage >= 3 ? "done" : ""}"></span></div></div></section>
-  <section class="detail-section"><h4 class="detail-label">مندوب التوصيل</h4><div class="driver-card"><span class="avatar sage">${esc(
-    (c.driver || "—")
-      .split(" ")
-      .map((x) => x[0])
-      .slice(0, 2)
-      .join(" "),
-  )}</span><div><strong>${esc(c.driver || "لم يُعيّن مندوب")}</strong><small>${c.driver ? "المندوب المرتبط بالطلب" : "بانتظار التعيين"}</small></div><button class="icon-btn" id="contactDriver" aria-label="مراسلة المندوب">${icon("chat")}</button></div></section>
-  <section class="detail-section"><h4 class="detail-label">ملخص الدفع</h4><div class="payment-row"><span>قيمة الطلب</span><b>${esc(c.amount || "—")} ر.ي</b></div><div class="payment-row"><span>التوصيل</span><b>${esc(c.delivery || "—")} ر.ي</b></div><div class="payment-row payment-total"><span>الإجمالي</span><b>${amount || delivery ? (amount + delivery).toLocaleString("en-US") : "—"} ر.ي</b></div><div class="payment-row"><span>طريقة الدفع</span><b>${esc(c.payment || "غير محددة")}</b></div></section>
-  <section class="detail-section"><h4 class="detail-label">تذكير بالمتابعة<span>${icon("clock")}</span></h4><div class="followup"><select id="followupSelect" aria-label="تحديد موعد المتابعة"><option value="">تحديد موعد للمتابعة</option><option value="15">بعد 15 دقيقة</option><option value="30">بعد 30 دقيقة</option><option value="60">بعد ساعة</option><option value="1440">بعد 24 ساعة</option></select>${c.followUpAt ? `<div class="followup-label ${new Date(c.followUpAt) < new Date() ? "overdue" : ""}">${icon("clock")}<span>${new Date(c.followUpAt).toLocaleString("ar-YE", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Aden" })}</span><button id="clearFollowup">إلغاء</button></div>` : ""}</div></section>
-  <button class="detail-summary" id="detailSummary">${icon("spark")}ملخص السجل والخطوة التالية${icon("arrowLeft")}</button>`;
+  <section class="detail-section widget-card"><h4 class="detail-label">تذكير بالمتابعة<span>${icon("clock")}</span></h4><div class="followup"><select id="followupSelect" aria-label="تحديد موعد المتابعة"><option value="">تحديد موعد للمتابعة</option><option value="15">بعد 15 دقيقة</option><option value="30">بعد 30 دقيقة</option><option value="60">بعد ساعة</option><option value="1440">بعد 24 ساعة</option></select>${c.followUpAt ? `<div class="followup-label ${new Date(c.followUpAt) < new Date() ? "overdue" : ""}">${icon("clock")}<span>${new Date(c.followUpAt).toLocaleString("ar-YE", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Aden" })}</span><button id="clearFollowup">إلغاء</button></div>` : ""}</div></section>
+  <button class="detail-summary" id="detailSummary">${icon("spark")}ملخص السجل والخطوة التالية${icon("arrowLeft")}</button></div>`;
+  $$("[data-context]").forEach(
+    (button) =>
+      (button.onclick = () => {
+        detailsTab = button.dataset.context;
+        renderDetails();
+        $(
+          detailsTab === "order" ? "#orderContextTab" : "#manageContextTab",
+        ).focus();
+      }),
+  );
   $("#closeDetails").onclick = () => el.classList.remove("open");
   $("#detailStatus").onchange = (e) =>
     patchChat(c, { status: e.target.value }, "تم تحديث حالة المحادثة");
@@ -630,6 +653,8 @@ function showSummary(c = current()) {
   );
 }
 const SUGGESTIONS = [
+  ["طلب الموقع", "فضلاً أرسل موقعك الحالي لتسهيل وصول المندوب."],
+  ["شكر العميل", "شكراً لتواصلك معنا، سعداء بخدمتك دائماً 💚"],
   [
     "تأكيد متابعة الطلب",
     "جاري متابعة طلبك مع المندوب، وبنرسل لك وقت الوصول فور تأكيده. شكراً لانتظارك.",
@@ -646,7 +671,7 @@ const SUGGESTIONS = [
 function replyAssistant() {
   if (!current()) return toast("اختر محادثة أولاً.");
   info(
-    "مساعد الردود",
+    "قوالب الردود",
     `<p class="info-footnote">قوالب قابلة للتعديل. اختر الرد المناسب، راجعه، ثم أرسله بنفسك.</p>${SUGGESTIONS.map(([title, text], i) => `<button class="suggestion-button" data-suggestion="${i}"><strong>${title} ${icon("arrowLeft")}</strong><p>${text}</p></button>`).join("")}`,
   );
 }
@@ -745,7 +770,7 @@ function closeSidebar() {
   $("#sidebarOverlay").hidden = true;
 }
 function showDetails() {
-  if (matchMedia("(max-width:1300px)").matches)
+  if (matchMedia("(max-width:1160px)").matches)
     $("#detailsPanel").classList.toggle("open");
   else {
     $("#detailsPanel").scrollTop = 0;
@@ -981,7 +1006,13 @@ $("#mobileMenu").onclick = () => {
 $("#sidebarOverlay").onclick = closeSidebar;
 $("#backBtn").onclick = () => $(".inbox").classList.remove("chat-visible");
 $("#detailsBtn").onclick = showDetails;
-$("#viewOrderBtn").onclick = showDetails;
+$("#viewOrderBtn").onclick = () => {
+  detailsTab = "order";
+  renderDetails();
+  if (matchMedia("(max-width:1160px)").matches)
+    $("#detailsPanel").classList.add("open");
+  else showDetails();
+};
 $("#search").oninput = renderList;
 $$("[data-type]").forEach(
   (b) =>
