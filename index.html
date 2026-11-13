@@ -1,20 +1,633 @@
 <!doctype html>
-<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#152e35"><title>وصل | مركز المحادثات</title></head>
-<body>
-<div class="app-shell">
-<aside class="rail"><a href="#" class="brand" aria-label="وصل"><svg viewBox="0 0 36 36" fill="none"><path d="M7 10h12l-5 8h15L16 30l4-10H7l6-8" stroke="currentColor" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a><div class="rail-links"><button data-view="overview" aria-label="نظرة عامة" data-icon="grid"></button><button data-view="orders" aria-label="الطلبات" data-icon="box"></button><button data-view="drivers" aria-label="المناديب" data-icon="truck"></button><button class="active" data-view="inbox" aria-label="المحادثات" data-icon="chat"><span class="rail-dot"></span></button></div><div class="rail-bottom"><button id="helpBtn" aria-label="حول الصفحة" data-icon="help"></button><span class="profile">م و</span></div></aside>
-<div class="workspace"><header class="topbar"><div class="breadcrumbs">مساحة العمل <span>/</span> <strong>المحادثات</strong></div><div class="topbar-left"><button class="account-btn" id="accountBtn">تسجيل الدخول</button><span class="divider"></span><button class="icon-btn" id="notificationsBtn" aria-label="التنبيهات" data-icon="bell"></button><div class="agent-mini"><span class="tiny-avatar">م</span><div><strong id="agentName">مساحة العرض</strong><small><i class="online-dot"></i> متاح الآن</small></div><span data-icon="chevronDown"></span></div></div></header>
-<main><section class="page-heading"><div><div class="eyebrow">كل تواصل، يقرّب المسافة</div><h1>مركز المحادثات <span class="title-dot"></span></h1><p>تواصل أسرع، متابعة أسهل، وعملاء أقرب.</p></div><button class="primary-btn" id="newChatBtn"><span data-icon="plus"></span> محادثة جديدة</button></section>
-<div class="summary-bar"><div class="summary-item"><span class="summary-symbol" data-icon="chat"></span><span>كل المحادثات</span><b id="totalCount">8</b></div><span class="summary-sep"></span><div class="summary-item"><i class="status-dot orange"></i><span>بانتظار الرد</span><b id="unreadCount">3</b></div><span class="summary-sep"></span><div class="summary-item"><i class="status-dot green"></i><span>تم حلّها</span><b id="resolvedCount">2</b></div><div class="local-indicator"><i></i> مساحة عرض تفاعلية</div></div>
-<section class="inbox" aria-label="مركز المحادثات">
-<aside class="conversation-panel"><div class="list-heading"><h2>صندوق الوارد <span id="listCount">8</span></h2><button class="icon-btn" id="sortBtn" title="تغيير ترتيب المحادثات" aria-label="تغيير ترتيب المحادثات" data-icon="sort"></button></div><div class="search-field"><span data-icon="search"></span><input id="search" type="search" placeholder="ابحث باسم، رسالة أو رقم طلب…" aria-label="البحث في المحادثات"><kbd>⌕</kbd></div><div class="tabs" role="tablist"><button class="selected" data-filter="all" role="tab">الكل</button><button data-filter="customer" role="tab">العملاء</button><button data-filter="driver" role="tab">المناديب</button><button data-filter="unread" role="tab">غير مقروءة</button></div><div class="conversation-list" id="conversationList"></div><div class="list-footer"><span data-icon="shield"></span> تواصل موحّد. تجربة أفضل.</div></aside>
-<section class="chat-panel"><header class="chat-header"><button class="icon-btn mobile-back" id="backBtn" aria-label="العودة للمحادثات" data-icon="arrowRight"></button><div id="chatAvatar"></div><div class="chat-identity"><h2 id="chatName"></h2><p id="chatSubtitle"></p></div><div class="chat-actions"><button class="status-control" id="statusBtn"></button><button class="icon-btn" id="detailsBtn" aria-label="تفاصيل الطلب" data-icon="panel"></button><button class="icon-btn" id="menuBtn" aria-label="خيارات المحادثة" data-icon="more"></button></div><div id="chatMenu" class="popup-menu" hidden><button id="exportBtn">تنزيل سجل المحادثة</button><button id="markUnreadBtn">تحديد كغير مقروءة</button></div></header><div class="order-strip"><span data-icon="box"></span><span>بخصوص الطلب</span><strong id="orderStripId"></strong><span class="strip-state" id="orderStripState"></span><button id="viewOrderBtn">عرض التفاصيل <span data-icon="arrowLeft"></span></button></div>
-<div class="messages" id="messages" role="log" aria-label="رسائل المحادثة" aria-live="polite"></div><div class="composer-wrap"><div class="quick-replies"><span data-icon="bolt"></span><button data-reply="جاري التواصل مع المندوب، وبنوافيك بالتحديث قريباً.">جاري متابعة الطلب</button><button data-reply="فضلاً أرسل موقعك الحالي لتسهيل وصول المندوب.">طلب الموقع</button><button data-reply="شكراً لتواصلك معنا، سعداء بخدمتك دائماً 💚">شكراً لتواصلك</button></div><div class="attachment-preview" id="attachmentPreview" hidden></div><form id="messageForm" class="composer"><textarea id="messageInput" rows="1" placeholder="اكتب رسالتك هنا…" aria-label="نص الرسالة"></textarea><div class="composer-tools"><button type="button" class="icon-btn" id="emojiBtn" aria-label="إضافة رمز تعبيري" data-icon="smile"></button><button type="button" class="icon-btn" id="attachBtn" aria-label="إرفاق صورة" data-icon="paperclip"></button><span class="tool-divider"></span><button type="submit" class="send-btn" aria-label="إرسال الرسالة" data-icon="send"></button></div></form><div class="composer-hint"><span><kbd>Enter</kbd> للإرسال <span class="hint-dot">·</span> <kbd>Shift + Enter</kbd> لسطر جديد</span><span data-icon="lock"></span></div><div class="emoji-picker" id="emojiPicker" hidden><button>😊</button><button>👍</button><button>💚</button><button>🙏</button><button>📍</button><button>🚚</button></div></div></section>
-<aside class="details-panel" id="detailsPanel"></aside>
-</section><footer class="page-footer"><span><b>وصل</b> <span>مسافات أقل، تجربة أقرب.</span></span><span><span id="modeFooter">واجهة تجريبية ببيانات توضيحية · الحفظ على هذا المتصفح</span></span></footer></main></div></div>
-<input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" hidden>
-<div class="toast" id="toast" role="status"></div>
-<dialog id="newChatDialog"><form id="newChatForm"><div class="dialog-title"><div><span class="eyebrow">ابدأ تواصلاً جديداً</span><h2>محادثة جديدة</h2></div><button type="button" class="icon-btn" id="closeDialog" aria-label="إغلاق" data-icon="x"></button></div><label>الاسم<input id="newName" required maxlength="70" placeholder="اسم العميل أو المندوب"></label><label>نوع جهة الاتصال<select id="newType"><option value="customer">عميل</option><option value="driver">مندوب</option></select></label><label>رقم الطلب<input id="newOrder" required maxlength="24" placeholder="مثال: 1049" dir="ltr"></label><button class="primary-btn" type="submit"><span data-icon="plus"></span> إنشاء المحادثة</button></form></dialog>
-<dialog id="infoDialog"><div class="dialog-title"><h2 id="infoTitle"></h2><button class="icon-btn" id="closeInfo" aria-label="إغلاق" data-icon="x"></button></div><div id="infoBody"></div></dialog>
-<dialog id="authDialog" aria-labelledby="authTitle"><form id="authForm"><div class="dialog-title"><div><span class="eyebrow">أهلاً بعودتك إلى وصل</span><h2 id="authTitle">تسجيل الدخول</h2></div></div><p class="auth-intro">ادخل إلى مساحة العمل لمتابعة محادثاتك من أي جهاز.</p><label>البريد الإلكتروني<input id="authEmail" type="email" required autocomplete="username" dir="ltr" placeholder="name@company.com"></label><label>كلمة المرور<input id="authPassword" type="password" required autocomplete="current-password" dir="ltr"></label><p id="authError" class="auth-error" role="alert"></p><button id="loginBtn" class="primary-btn" type="submit">الدخول إلى مساحة العمل</button><button id="demoBtn" class="demo-btn" type="button">استكشاف العرض التجريبي</button></form></dialog>
-<script type="module" src="/src/app.js"></script></body></html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#132e2c" />
+    <meta
+      name="description"
+      content="وصل — مساحة واحدة لإدارة محادثات التوصيل ومتابعة الطلبات وخدمة العملاء."
+    />
+    <title>وصل — مساحة التواصل</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <button class="brand" id="homeBtn" aria-label="وصل، الصفحة الرئيسية">
+          <span class="brand-symbol"
+            ><svg viewBox="0 0 40 40" fill="none">
+              <path
+                d="M8 12h15l-6 8h15L17 33l5-12H8l6-8"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linejoin="round"
+                stroke-linecap="round"
+              /></svg></span
+          ><span
+            ><b>وصل<span class="brand-period">.</span></b
+            ><small>مسافات أقل. تواصل أقرب.</small></span
+          >
+        </button>
+        <div class="workspace-switch">
+          <span class="workspace-letter">و</span>
+          <div>
+            <strong>مساحة العمليات</strong><small>خدمة العملاء والتوصيل</small>
+          </div>
+          <span data-icon="chevronDown"></span>
+        </div>
+        <div class="nav-caption">مساحة العمل</div>
+        <nav class="main-nav" aria-label="التنقل الرئيسي">
+          <button data-nav="overview">
+            <span data-icon="chart"></span>نظرة عامة<span
+              class="nav-arrow"
+              data-icon="arrowLeft"
+            ></span>
+          </button>
+          <button class="active" data-nav="inbox">
+            <span data-icon="chat"></span>المحادثات<span
+              class="nav-count"
+              id="navTotal"
+              >8</span
+            >
+          </button>
+          <button data-nav="orders">
+            <span data-icon="box"></span>الطلبات
+          </button>
+          <button data-nav="drivers">
+            <span data-icon="truck"></span>المناديب
+          </button>
+        </nav>
+        <div class="nav-caption views-caption">
+          صندوقك الوارد
+          <button
+            class="small-icon"
+            id="viewsHelp"
+            aria-label="حول طرق العرض"
+            data-icon="help"
+          ></button>
+        </div>
+        <nav class="saved-views" aria-label="طرق عرض المحادثات">
+          <button class="selected" data-view="all">
+            <span class="view-dot all"></span>كل المحادثات<b id="view-all">8</b>
+          </button>
+          <button data-view="mine">
+            <span data-icon="user"></span>المسندة إليّ<b id="view-mine">0</b>
+          </button>
+          <button data-view="unassigned">
+            <span data-icon="users"></span>غير المسندة<b id="view-unassigned"
+              >0</b
+            >
+          </button>
+          <button data-view="starred">
+            <span data-icon="star"></span>المميزة بنجمة<b id="view-starred"
+              >0</b
+            >
+          </button>
+          <button data-view="urgent">
+            <span class="view-dot urgent"></span>عاجلة<b id="view-urgent">0</b>
+          </button>
+          <button data-view="followup">
+            <span data-icon="clock"></span>حان وقت متابعتها<b id="view-followup"
+              >0</b
+            >
+          </button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="sidebar-tip">
+            <span data-icon="bolt"></span>
+            <div>
+              <b>خطوة واحدة تفرق.</b>
+              <p>ردّ أسرع، وخلّ كل طلب يوصل بتجربة أفضل.</p>
+            </div>
+          </div>
+          <div class="sidebar-tools">
+            <button id="helpBtn">
+              <span data-icon="help"></span>المساعدة والاختصارات</button
+            ><button
+              id="settingsBtn"
+              aria-label="الإعدادات"
+              data-icon="settings"
+            ></button>
+          </div>
+          <div class="sidebar-profile">
+            <span class="profile-avatar">م</span>
+            <div>
+              <strong id="agentName">محمد وليد</strong
+              ><small id="agentRole">مساحة العرض التجريبي</small>
+            </div>
+            <button
+              id="accountBtn"
+              aria-label="الدخول إلى مساحة العمل"
+              data-icon="arrowLeft"
+            ></button>
+          </div>
+        </div>
+      </aside>
+      <div class="workspace">
+        <header class="topbar">
+          <div class="breadcrumbs">
+            <button
+              class="icon-btn mobile-menu"
+              id="mobileMenu"
+              aria-label="فتح القائمة"
+              data-icon="menu"
+            ></button
+            ><span>مساحة العمليات</span><span class="crumb-slash">/</span
+            ><strong>المحادثات</strong>
+          </div>
+          <div class="topbar-actions">
+            <button class="command-trigger" id="commandBtn">
+              <span data-icon="search"></span><span>ابحث أو نفّذ إجراءً</span
+              ><kbd>⌘ K</kbd></button
+            ><span class="topbar-divider"></span
+            ><button
+              class="icon-btn"
+              id="themeBtn"
+              aria-label="تبديل المظهر"
+              data-icon="moon"
+            ></button
+            ><button
+              class="icon-btn notification-button"
+              id="notificationsBtn"
+              aria-label="التنبيهات"
+            >
+              <span data-icon="bell"></span><i id="notificationDot"></i></button
+            ><span class="top-avatar">م و</span>
+          </div>
+        </header>
+        <main>
+          <section class="page-heading">
+            <div>
+              <div class="eyebrow">
+                <span class="eyebrow-line"></span>تجربة عميل أفضل، تبدأ بمحادثة
+              </div>
+              <h1>مركز المحادثات<span class="heading-period">.</span></h1>
+              <p>كل رسالة، كل طلب، وكل التفاصيل التي تحتاجها. في مكان واحد.</p>
+            </div>
+            <div class="heading-actions">
+              <div class="local-indicator"><i></i><span>عرض تجريبي</span></div>
+              <button class="primary-btn" id="newChatBtn">
+                <span data-icon="plus"></span>محادثة جديدة
+              </button>
+            </div>
+          </section>
+          <section class="metric-grid" aria-label="مؤشرات المحادثات">
+            <button class="metric-card" data-metric="all">
+              <div>
+                <span>إجمالي المحادثات</span><strong id="totalCount">8</strong
+                ><small>ضمن السجل المعروض</small>
+              </div>
+              <span class="metric-icon teal" data-icon="chat"></span>
+            </button>
+            <button class="metric-card" data-metric="waiting">
+              <div>
+                <span>بانتظار ردّك</span><strong id="waitingCount">3</strong
+                ><small><i class="status-dot amber"></i>كل رد يصنع فرقاً</small>
+              </div>
+              <span class="metric-icon amber" data-icon="clock"></span>
+            </button>
+            <button class="metric-card" id="responseMetric">
+              <div>
+                <span>متوسط وقت الرد</span><strong id="responseTime">—</strong
+                ><small id="responseSample"
+                  >من الرسائل التي تم الرد عليها</small
+                >
+              </div>
+              <span class="metric-icon violet" data-icon="bolt"></span>
+            </button>
+            <button class="metric-card" data-metric="resolved">
+              <div>
+                <span>محادثات تم حلّها</span><strong id="resolvedCount">2</strong
+                ><small id="resolvedPercentage">من إجمالي المحادثات</small>
+              </div>
+              <span class="metric-ring" id="resolutionRing"
+                ><span data-icon="check"></span
+              ></span>
+            </button>
+          </section>
+          <section class="inbox" aria-label="مركز المحادثات">
+            <aside class="conversation-panel">
+              <div class="list-heading">
+                <h2 id="viewTitle">
+                  صندوق الوارد <span id="listCount">8</span>
+                </h2>
+                <div class="list-actions">
+                  <button
+                    class="icon-btn"
+                    id="selectModeBtn"
+                    aria-label="تحديد محادثات متعددة"
+                    data-icon="checks"
+                  ></button
+                  ><button
+                    class="icon-btn"
+                    id="sortBtn"
+                    aria-label="تغيير ترتيب المحادثات"
+                    data-icon="sort"
+                  ></button>
+                </div>
+              </div>
+              <div class="search-field">
+                <span data-icon="search"></span
+                ><input
+                  id="search"
+                  type="search"
+                  placeholder="اسم، رسالة أو رقم طلب…"
+                  aria-label="البحث في المحادثات"
+                /><kbd>/</kbd>
+              </div>
+              <div class="list-tabs" role="tablist">
+                <button
+                  class="selected"
+                  data-type="all"
+                  role="tab"
+                  aria-selected="true"
+                >
+                  الكل</button
+                ><button data-type="customer" role="tab" aria-selected="false">
+                  العملاء</button
+                ><button data-type="driver" role="tab" aria-selected="false">
+                  المناديب
+                </button>
+              </div>
+              <div class="list-filter-line">
+                <span id="listDescription">الأحدث أولاً</span
+                ><select id="statusFilter" aria-label="تصفية حسب الحالة">
+                  <option value="all">كل الحالات</option>
+                  <option value="open">مفتوحة</option>
+                  <option value="pending">قيد المتابعة</option>
+                  <option value="resolved">تم الحل</option>
+                </select>
+              </div>
+              <div class="bulk-toolbar" id="bulkToolbar" hidden>
+                <label
+                  ><input
+                    id="selectAll"
+                    type="checkbox"
+                    aria-label="تحديد الكل"
+                  /><span id="selectedCount">0 محددة</span></label
+                ><button id="bulkResolve">حلّ المحدد</button
+                ><button
+                  class="icon-btn"
+                  id="cancelSelection"
+                  aria-label="إلغاء التحديد"
+                  data-icon="x"
+                ></button>
+              </div>
+              <div id="conversationList" class="conversation-list"></div>
+              <div class="list-footer">
+                <span data-icon="shield"></span
+                ><span>التفاصيل واضحة. والمتابعة أسهل.</span
+                ><button
+                  id="exportCsvBtn"
+                  title="تصدير المحادثات CSV"
+                  aria-label="تصدير المحادثات CSV"
+                  data-icon="download"
+                ></button>
+              </div>
+            </aside>
+            <section class="chat-panel">
+              <header class="chat-header">
+                <button
+                  class="icon-btn mobile-back"
+                  id="backBtn"
+                  aria-label="العودة للمحادثات"
+                  data-icon="arrowRight"
+                ></button>
+                <div id="chatAvatar"></div>
+                <div class="chat-identity">
+                  <h2 id="chatName">اختر محادثة</h2>
+                  <p id="chatSubtitle"></p>
+                </div>
+                <div class="chat-actions">
+                  <button
+                    class="icon-btn"
+                    id="starBtn"
+                    aria-label="تمييز المحادثة بنجمة"
+                    data-icon="star"
+                  ></button
+                  ><button
+                    class="icon-btn"
+                    id="chatSearchBtn"
+                    aria-label="البحث داخل المحادثة"
+                    data-icon="search"
+                  ></button
+                  ><button
+                    class="icon-btn details-trigger"
+                    id="detailsBtn"
+                    aria-label="تفاصيل الطلب"
+                    data-icon="panel"
+                  ></button
+                  ><button
+                    class="icon-btn"
+                    id="menuBtn"
+                    aria-label="خيارات المحادثة"
+                    data-icon="more"
+                  ></button>
+                </div>
+                <div id="chatMenu" class="popup-menu" hidden>
+                  <button id="summaryBtn">
+                    <span data-icon="spark"></span>ملخص المحادثة</button
+                  ><button id="markUnreadBtn">
+                    <span data-icon="chat"></span>تحديد كغير مقروءة</button
+                  ><button id="exportBtn">
+                    <span data-icon="download"></span>تنزيل الرسائل
+                  </button>
+                </div>
+              </header>
+              <div class="chat-search-bar" id="chatSearchBar" hidden>
+                <span data-icon="search"></span
+                ><input
+                  id="messageSearch"
+                  placeholder="ابحث داخل هذه المحادثة…"
+                  aria-label="البحث داخل رسائل المحادثة"
+                /><span id="messageMatchCount"></span
+                ><button
+                  class="icon-btn"
+                  id="closeChatSearch"
+                  aria-label="إغلاق بحث الرسائل"
+                  data-icon="x"
+                ></button>
+              </div>
+              <div class="order-strip">
+                <div>
+                  <span class="strip-box" data-icon="box"></span
+                  ><span>طلب التوصيل</span><strong id="orderStripId">—</strong
+                  ><span id="orderStripState" class="delivery-badge"></span>
+                </div>
+                <button id="viewOrderBtn">
+                  تفاصيل الطلب<span data-icon="arrowLeft"></span>
+                </button>
+              </div>
+              <div class="sla-banner" id="slaBanner" hidden></div>
+              <div
+                class="messages"
+                id="messages"
+                role="log"
+                aria-live="polite"
+                aria-label="رسائل المحادثة"
+              ></div>
+              <div class="composer-wrap">
+                <div class="composer-mode">
+                  <div class="mode-tabs" role="tablist">
+                    <button
+                      id="replyMode"
+                      class="selected"
+                      role="tab"
+                      aria-selected="true"
+                    >
+                      <span data-icon="chat"></span>ردّ على العميل</button
+                    ><button id="noteMode" role="tab" aria-selected="false">
+                      <span data-icon="note"></span>ملاحظة داخلية
+                    </button>
+                  </div>
+                  <button id="replyAssistBtn" class="reply-assist">
+                    <span data-icon="spark"></span>مساعد الردود
+                  </button>
+                </div>
+                <div id="quickReplies" class="quick-replies"></div>
+                <div
+                  id="attachmentPreview"
+                  class="attachment-preview"
+                  hidden
+                ></div>
+                <form id="messageForm" class="composer">
+                  <textarea
+                    id="messageInput"
+                    rows="2"
+                    maxlength="4000"
+                    placeholder="اكتب ردّك، وخلّ التجربة أقرب…"
+                    aria-label="نص الرسالة"
+                  ></textarea>
+                  <div class="composer-bottom">
+                    <div class="composer-tools">
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        id="attachBtn"
+                        aria-label="إرفاق صورة"
+                        data-icon="paperclip"
+                      ></button
+                      ><button
+                        type="button"
+                        class="icon-btn"
+                        id="emojiBtn"
+                        aria-label="إضافة رمز تعبيري"
+                        data-icon="smile"
+                      ></button
+                      ><span class="composer-tool-sep"></span
+                      ><span class="compose-recipient" id="composeRecipient"
+                        >الردّ على العميل</span
+                      >
+                    </div>
+                    <button type="submit" class="send-btn" id="sendBtn">
+                      <span id="sendLabel">إرسال الرد</span
+                      ><span data-icon="send"></span>
+                    </button>
+                  </div>
+                </form>
+                <div class="composer-hint">
+                  <span
+                    ><kbd>Enter</kbd> للإرسال <span>·</span>
+                    <kbd>Shift + Enter</kbd> لسطر جديد</span
+                  ><span id="draftHint">ردّك واضح، وعميلك مطمئن.</span>
+                </div>
+                <div class="emoji-picker" id="emojiPicker" hidden>
+                  <button>😊</button><button>👍</button><button>💚</button
+                  ><button>🙏</button><button>📍</button><button>🚚</button>
+                </div>
+              </div>
+            </section>
+            <aside class="details-panel" id="detailsPanel"></aside>
+          </section>
+          <footer class="page-footer">
+            <span><b>وَصل</b> صُمّم لتجربة تترك أثراً.</span
+            ><span id="modeFooter">عرض تجريبي · بيانات توضيحية</span
+            ><button id="shortcutsBtn">
+              اختصارات لوحة المفاتيح<span data-icon="bolt"></span>
+            </button>
+          </footer>
+        </main>
+      </div>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay" hidden></div>
+    <input
+      type="file"
+      id="fileInput"
+      accept="image/png,image/jpeg,image/webp"
+      hidden
+    />
+    <div id="toast" class="toast" role="status"></div>
+    <dialog id="newChatDialog">
+      <form id="newChatForm">
+        <div class="dialog-title">
+          <div>
+            <span class="eyebrow">ابدأ تواصلاً أفضل</span>
+            <h2>محادثة جديدة</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-btn"
+            data-close="newChatDialog"
+            aria-label="إغلاق"
+            data-icon="x"
+          ></button>
+        </div>
+        <label
+          >اسم جهة الاتصال<input
+            id="newName"
+            required
+            maxlength="70"
+            placeholder="اسم العميل أو المندوب"
+        /></label>
+        <div class="form-grid">
+          <label
+            >نوع جهة الاتصال<select id="newType">
+              <option value="customer">عميل</option>
+              <option value="driver">مندوب</option>
+            </select></label
+          ><label
+            >رقم الطلب<input
+              id="newOrder"
+              required
+              maxlength="24"
+              placeholder="1049"
+              dir="ltr"
+          /></label>
+        </div>
+        <div class="form-grid">
+          <label
+            >الأولوية<select id="newPriority">
+              <option value="normal">عادية</option>
+              <option value="high">مرتفعة</option>
+              <option value="urgent">عاجلة</option>
+            </select></label
+          ><label
+            >الإسناد<select id="newAssignee">
+              <option value="">غير مسندة</option>
+              <option value="me">إسناد إليّ</option>
+            </select></label
+          >
+        </div>
+        <button class="primary-btn dialog-submit" type="submit">
+          إنشاء المحادثة<span data-icon="arrowLeft"></span>
+        </button>
+      </form>
+    </dialog>
+    <dialog id="infoDialog" class="wide-dialog">
+      <div class="dialog-title">
+        <div>
+          <span class="eyebrow">مساحة العمليات</span>
+          <h2 id="infoTitle"></h2>
+        </div>
+        <button
+          class="icon-btn"
+          data-close="infoDialog"
+          aria-label="إغلاق"
+          data-icon="x"
+        ></button>
+      </div>
+      <div id="infoBody"></div>
+    </dialog>
+    <dialog id="orderDialog">
+      <form id="orderForm">
+        <div class="dialog-title">
+          <h2>تعديل بيانات الطلب</h2>
+          <button
+            type="button"
+            class="icon-btn"
+            data-close="orderDialog"
+            aria-label="إغلاق"
+            data-icon="x"
+          ></button>
+        </div>
+        <label
+          >المتجر / نقطة الاستلام<input
+            id="editRestaurant"
+            maxlength="100" /></label
+        ><label>عنوان الاستلام<input id="editPickup" maxlength="180" /></label
+        ><label>عنوان التوصيل<input id="editAddress" maxlength="180" /></label
+        ><label
+          >حالة الطلب<select id="editOrderState">
+            <option>طلب جديد</option>
+            <option>قيد التجهيز</option>
+            <option>في الطريق</option>
+            <option>تم التسليم</option>
+          </select></label
+        >
+        <div class="form-grid">
+          <label
+            >قيمة الطلب (ر.ي)<input
+              id="editAmount"
+              type="number"
+              min="0"
+              max="100000000"
+              step="1" /></label
+          ><label
+            >رسوم التوصيل (ر.ي)<input
+              id="editDelivery"
+              type="number"
+              min="0"
+              max="100000000"
+              step="1"
+          /></label>
+        </div>
+        <label
+          >طريقة الدفع<select id="editPayment">
+            <option>الدفع عند الاستلام</option>
+            <option>مدفوع إلكترونياً</option>
+          </select></label
+        ><button class="primary-btn dialog-submit" type="submit">
+          حفظ بيانات الطلب
+        </button>
+      </form>
+    </dialog>
+    <dialog id="commandDialog" class="command-dialog">
+      <div class="command-search">
+        <span data-icon="search"></span
+        ><input
+          id="commandInput"
+          placeholder="ابحث عن محادثة أو إجراء…"
+          aria-label="البحث السريع"
+        /><kbd>Esc</kbd>
+      </div>
+      <div id="commandResults" class="command-results"></div>
+      <div class="command-footer">كل أدواتك على بُعد اختصار.</div>
+    </dialog>
+    <dialog id="authDialog" aria-labelledby="authTitle">
+      <form id="authForm">
+        <div class="dialog-title">
+          <div>
+            <span class="eyebrow">مرحباً بعودتك</span>
+            <h2 id="authTitle">ادخل إلى مساحة العمل</h2>
+          </div>
+        </div>
+        <p class="auth-intro">
+          محادثاتك، ومتابعاتك، وكل ما تحتاجه لخدمة عميلك.
+        </p>
+        <label
+          >البريد الإلكتروني<input
+            id="authEmail"
+            type="email"
+            required
+            autocomplete="username"
+            dir="ltr"
+            placeholder="name@company.com" /></label
+        ><label
+          >كلمة المرور<input
+            id="authPassword"
+            type="password"
+            required
+            autocomplete="current-password"
+            dir="ltr"
+        /></label>
+        <p id="authError" class="auth-error" role="alert"></p>
+        <button id="loginBtn" class="primary-btn dialog-submit" type="submit">
+          تسجيل الدخول</button
+        ><button id="demoBtn" class="demo-btn" type="button">
+          استكشاف العرض التجريبي
+        </button>
+      </form>
+    </dialog>
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>

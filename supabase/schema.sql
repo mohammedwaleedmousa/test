@@ -12,6 +12,11 @@ create table public.conversations (
   order_number text not null check (length(trim(order_number)) between 1 and 24),
   order_state text not null default 'طلب جديد',
   order_details jsonb not null default '{}'::jsonb check (jsonb_typeof(order_details) = 'object'),
+  priority text not null default 'normal' check (priority in ('normal','high','urgent')),
+  assignee text check (assignee is null or assignee = 'me'),
+  starred boolean not null default false,
+  tags text[] not null default '{}'::text[] check (cardinality(tags) <= 5 and tags <@ array['تأخير التوصيل','تعديل العنوان','مشكلة في الطلب','الدفع','إثبات التسليم']::text[]),
+  follow_up_at timestamptz,
   status text not null default 'open' check (status in ('open','pending','resolved')),
   unread_count integer not null default 0 check (unread_count >= 0),
   created_at timestamptz not null default now(),
@@ -24,12 +29,13 @@ create table public.messages (
   id uuid primary key default gen_random_uuid(),
   conversation_id uuid not null,
   owner_id uuid not null,
-  direction text not null check (direction in ('outgoing','incoming','event')),
+  direction text not null check (direction in ('outgoing','incoming','event','note')),
   body text not null default '' check (length(body) <= 4000),
   image_path text,
   created_at timestamptz not null default now(),
   foreign key (conversation_id, owner_id) references public.conversations(id, owner_id) on delete cascade,
   check (length(trim(body)) > 0 or image_path is not null),
+  check (direction <> 'note' or image_path is null),
   check (image_path is null or (
     image_path like owner_id::text || '/' || conversation_id::text || '/%'
     and image_path !~ '(^|/)\.\.(/|$)'
@@ -52,9 +58,9 @@ create policy conversations_update on public.conversations for update to authent
   using (owner_id = (select auth.uid())) with check (owner_id = (select auth.uid()));
 create policy messages_read on public.messages for select to authenticated
   using (owner_id = (select auth.uid()));
--- Incoming messages must be inserted by a trusted integration, not impersonated by the browser.
+-- Internal notes remain private; incoming messages must be inserted by a trusted integration, not impersonated by the browser.
 create policy messages_send on public.messages for insert to authenticated
-  with check (owner_id = (select auth.uid()) and direction = 'outgoing');
+  with check (owner_id = (select auth.uid()) and direction in ('outgoing','note'));
 
 create function public.wasl_touch_conversation() returns trigger
 language plpgsql security invoker set search_path = '' as $$
